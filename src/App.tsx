@@ -7,6 +7,11 @@ import Landing from "./pages/Landing";
 import Login from "./pages/auth/Login";
 import Register from "./pages/auth/Register";
 import Dashboard from "./pages/dashboard/Dashboard";
+import Products from "./pages/dashboard/Products";
+import Customers from "./pages/dashboard/Customers";
+import Staff from "./pages/dashboard/Staff";
+import Services from "./pages/dashboard/Services";
+import Bookings from "./pages/dashboard/Bookings";
 import POSInterface from "./pages/pos/POSInterface";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import ClientWebsite from "./pages/client-website/ClientWebsite";
@@ -25,6 +30,11 @@ const App = () => (
           <Route path="/auth/login" element={<Login />} />
           <Route path="/auth/register" element={<Register />} />
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/dashboard/products" element={<Products />} />
+          <Route path="/dashboard/customers" element={<Customers />} />
+          <Route path="/dashboard/staff" element={<Staff />} />
+          <Route path="/dashboard/services" element={<Services />} />
+          <Route path="/dashboard/bookings" element={<Bookings />} />
           <Route path="/pos" element={<POSInterface />} />
           <Route path="/admin" element={<AdminDashboard />} />
           <Route path="/client-site" element={<ClientWebsite />} />
