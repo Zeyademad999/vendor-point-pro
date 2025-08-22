@@ -98,11 +98,11 @@ const Landing = () => {
             <h1 className="text-5xl md:text-7xl font-bold mb-6 animate-slide-up">
               Complete Business
               <br />
-              <span className="bg-gradient-to-r from-white to-blue-100 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-white to-white/70 bg-clip-text text-transparent">
                 Management Solution
               </span>
             </h1>
-            <p className="text-xl md:text-2xl mb-8 text-blue-100 max-w-3xl mx-auto animate-slide-up">
+            <p className="text-xl md:text-2xl mb-8 text-white/80 max-w-3xl mx-auto animate-slide-up">
               Transform your business with our all-in-one POS system, inventory management, 
               customer tracking, and automated branded website generation.
             </p>
@@ -226,7 +226,7 @@ const Landing = () => {
           <h2 className="text-4xl font-bold mb-6 animate-slide-up">
             Ready to Transform Your Business?
           </h2>
-          <p className="text-xl mb-8 text-blue-100 animate-slide-up">
+          <p className="text-xl mb-8 text-white/80 animate-slide-up">
             Join thousands of successful businesses using FlokiPOS
           </p>
           <div className="animate-scale-in">

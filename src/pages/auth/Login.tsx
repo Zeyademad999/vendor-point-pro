@@ -41,7 +41,7 @@ const Login = () => {
             <Zap className="h-7 w-7 text-primary" />
           </div>
           <h1 className="text-3xl font-bold text-white mb-2">Welcome Back</h1>
-          <p className="text-blue-100">Sign in to your FlokiPOS account</p>
+          <p className="text-white/80">Sign in to your FlokiPOS account</p>
         </div>
 
         <Card className="bg-white/95 backdrop-blur-sm border-0 shadow-2xl animate-scale-in">

@@ -52,7 +52,7 @@ const Register = () => {
             <Zap className="h-7 w-7 text-primary" />
           </div>
           <h1 className="text-3xl font-bold text-white mb-2">Join FlokiPOS</h1>
-          <p className="text-blue-100">Start your business transformation today</p>
+          <p className="text-white/80">Start your business transformation today</p>
         </div>
 
         <Card className="bg-white/95 backdrop-blur-sm border-0 shadow-2xl animate-scale-in">

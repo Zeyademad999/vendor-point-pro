@@ -61,9 +61,9 @@ const ClientWebsite = () => {
           <h1 className="text-5xl font-bold mb-6 animate-fade-in">
             Experience Luxury
             <br />
-            <span className="text-blue-200">Beauty & Style</span>
+            <span className="text-white/80">Beauty & Style</span>
           </h1>
-          <p className="text-xl mb-8 text-blue-100 max-w-2xl mx-auto animate-slide-up">
+          <p className="text-xl mb-8 text-white/80 max-w-2xl mx-auto animate-slide-up">
             Transform your look with our premium services. Professional stylists, premium products, exceptional results.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center animate-scale-in">

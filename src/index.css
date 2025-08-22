@@ -2,66 +2,66 @@
 @tailwind components;
 @tailwind utilities;
 
-/* FlokiPOS Design System - Professional Blue & White Theme */
+/* FlokiPOS Design System - Professional Dark Navy & White Theme */
 
 @layer base {
   :root {
     /* Core Brand Colors */
     --background: 0 0% 100%;
-    --foreground: 220 20% 15%;
+    --foreground: 220 26% 14%;
     
-    /* Primary Blue Palette */
-    --primary: 210 100% 50%;
-    --primary-light: 210 100% 65%;
-    --primary-dark: 210 100% 35%;
+    /* Primary Dark Navy Palette */
+    --primary: 220 26% 14%;
+    --primary-light: 220 26% 24%;
+    --primary-dark: 220 26% 8%;
     --primary-foreground: 0 0% 100%;
     
     /* Secondary & Accent */
-    --secondary: 210 25% 95%;
-    --secondary-foreground: 210 100% 40%;
-    --accent: 210 15% 92%;
-    --accent-foreground: 210 100% 45%;
+    --secondary: 220 14% 96%;
+    --secondary-foreground: 220 26% 14%;
+    --accent: 220 14% 92%;
+    --accent-foreground: 220 26% 14%;
     
     /* Surface Colors */
     --card: 0 0% 100%;
-    --card-foreground: 220 20% 15%;
+    --card-foreground: 220 26% 14%;
     --popover: 0 0% 100%;
-    --popover-foreground: 220 20% 15%;
+    --popover-foreground: 220 26% 14%;
     
     /* Semantic Colors */
     --success: 140 70% 45%;
     --success-foreground: 0 0% 100%;
     --warning: 45 100% 55%;
-    --warning-foreground: 220 20% 15%;
+    --warning-foreground: 220 26% 14%;
     --destructive: 0 85% 60%;
     --destructive-foreground: 0 0% 100%;
     
     /* Neutral Grays */
-    --muted: 210 15% 96%;
-    --muted-foreground: 210 10% 50%;
-    --border: 210 20% 90%;
-    --input: 210 20% 94%;
-    --ring: 210 100% 50%;
+    --muted: 220 14% 96%;
+    --muted-foreground: 220 8% 46%;
+    --border: 220 13% 91%;
+    --input: 220 13% 94%;
+    --ring: 220 26% 14%;
     
     /* Gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(210 100% 50%), hsl(210 100% 65%));
-    --gradient-hero: linear-gradient(135deg, hsl(210 100% 50%) 0%, hsl(210 100% 65%) 50%, hsl(220 70% 70%) 100%);
-    --gradient-card: linear-gradient(145deg, hsl(0 0% 100%) 0%, hsl(210 25% 98%) 100%);
+    --gradient-primary: linear-gradient(135deg, hsl(220 26% 14%), hsl(220 26% 24%));
+    --gradient-hero: linear-gradient(135deg, hsl(220 26% 14%) 0%, hsl(220 26% 18%) 50%, hsl(220 20% 25%) 100%);
+    --gradient-card: linear-gradient(145deg, hsl(0 0% 100%) 0%, hsl(220 14% 98%) 100%);
     
     /* Shadows */
-    --shadow-sm: 0 2px 4px hsl(210 100% 50% / 0.08);
-    --shadow-md: 0 4px 12px hsl(210 100% 50% / 0.12);
-    --shadow-lg: 0 8px 24px hsl(210 100% 50% / 0.15);
-    --shadow-glow: 0 0 20px hsl(210 100% 50% / 0.3);
+    --shadow-sm: 0 2px 4px hsl(220 26% 14% / 0.08);
+    --shadow-md: 0 4px 12px hsl(220 26% 14% / 0.12);
+    --shadow-lg: 0 8px 24px hsl(220 26% 14% / 0.15);
+    --shadow-glow: 0 0 20px hsl(220 26% 14% / 0.3);
     
     /* Sidebar */
-    --sidebar-background: 210 100% 50%;
+    --sidebar-background: 220 26% 14%;
     --sidebar-foreground: 0 0% 100%;
     --sidebar-primary: 0 0% 100%;
-    --sidebar-primary-foreground: 210 100% 50%;
-    --sidebar-accent: 210 100% 45%;
+    --sidebar-primary-foreground: 220 26% 14%;
+    --sidebar-accent: 220 26% 18%;
     --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 210 100% 45%;
+    --sidebar-border: 220 26% 18%;
     --sidebar-ring: 0 0% 100%;
     
     /* Spacing & Typography */
@@ -71,10 +71,10 @@
   }
   
   .dark {
-    --background: 220 25% 8%;
+    --background: 220 26% 8%;
     --foreground: 0 0% 95%;
-    --primary: 210 100% 60%;
-    --card: 220 20% 12%;
+    --primary: 220 26% 18%;
+    --card: 220 26% 12%;
     --muted: 220 15% 20%;
     --border: 220 15% 25%;
   }
@@ -163,6 +163,6 @@
 }
 
 @keyframes pulse-glow {
-  0%, 100% { box-shadow: 0 0 20px hsl(210 100% 50% / 0.3); }
-  50% { box-shadow: 0 0 30px hsl(210 100% 50% / 0.5); }
+  0%, 100% { box-shadow: 0 0 20px hsl(220 26% 14% / 0.3); }
+  50% { box-shadow: 0 0 30px hsl(220 26% 14% / 0.5); }
 }
