@@ -1,318 +1,387 @@
-import React, { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Switch } from '@/components/ui/switch';
-import { Users, Building, DollarSign, TrendingUp, Search, Plus, Settings, MoreHorizontal, Eye, Ban } from 'lucide-react';
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { useToast } from "@/hooks/use-toast";
+import { useStaffAuth } from "@/contexts/StaffAuthContext";
+import { useAuth } from "@/contexts/AuthContext";
+import {
+  Shield,
+  Users,
+  Settings,
+  BarChart3,
+  DollarSign,
+  TrendingUp,
+  LogOut,
+  User,
+  Building,
+  Activity,
+} from "lucide-react";
+import PageTransition from "@/components/PageTransition";
 
 const AdminDashboard = () => {
-  const [searchTerm, setSearchTerm] = useState('');
+  const {
+    staff,
+    business: staffBusiness,
+    logout: staffLogout,
+  } = useStaffAuth();
+  const { user: businessOwner, logout: businessLogout } = useAuth();
+  const { toast } = useToast();
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
 
-  const stats = [
-    { title: "Total Clients", value: "1,247", change: "+12%", icon: Users },
-    { title: "Active Subscriptions", value: "1,156", change: "+8%", icon: Building },
-    { title: "Monthly Revenue", value: "$89,432", change: "+15%", icon: DollarSign },
-    { title: "Growth Rate", value: "23%", change: "+3%", icon: TrendingUp },
-  ];
-
-  const clients = [
-    { 
-      id: "1", 
-      name: "Luxe Salon", 
-      owner: "Sarah Johnson", 
-      email: "sarah@luxesalon.com", 
-      plan: "Professional", 
-      status: "Active", 
-      revenue: "$459/month",
-      joinDate: "2024-01-15"
-    },
-    { 
-      id: "2", 
-      name: "Mike's Barbershop", 
-      owner: "Mike Wilson", 
-      email: "mike@barbershop.com", 
-      plan: "Starter", 
-      status: "Active", 
-      revenue: "$129/month",
-      joinDate: "2024-02-03"
-    },
-    { 
-      id: "3", 
-      name: "Elite Fitness", 
-      owner: "John Smith", 
-      email: "john@elitefitness.com", 
-      plan: "Enterprise", 
-      status: "Suspended", 
-      revenue: "$899/month",
-      joinDate: "2023-11-22"
-    },
-    { 
-      id: "4", 
-      name: "Beauty Corner", 
-      owner: "Emma Davis", 
-      email: "emma@beautycorner.com", 
-      plan: "Professional", 
-      status: "Active", 
-      revenue: "$459/month",
-      joinDate: "2024-01-08"
-    },
-  ];
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'Active': return 'bg-success text-success-foreground';
-      case 'Suspended': return 'bg-destructive text-destructive-foreground';
-      case 'Pending': return 'bg-warning text-warning-foreground';
-      default: return 'bg-secondary text-secondary-foreground';
+  const handleLogout = async () => {
+    try {
+      setLoading(true);
+      await businessLogout();
+      navigate("/dashboard");
+      toast({
+        title: "Logged out",
+        description: "You have been successfully logged out",
+      });
+    } catch (error) {
+      console.error("Logout error:", error);
+      toast({
+        title: "Error",
+        description: "Failed to logout",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
-  const getPlanColor = (plan: string) => {
-    switch (plan) {
-      case 'Enterprise': return 'bg-primary text-primary-foreground';
-      case 'Professional': return 'bg-secondary text-secondary-foreground';
-      case 'Starter': return 'bg-muted text-muted-foreground';
-      default: return 'bg-secondary text-secondary-foreground';
-    }
-  };
-
-  const filteredClients = clients.filter(client => 
-    client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    client.owner.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    client.email.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  if (!businessOwner) {
+    return (
+      <PageTransition>
+        <div className="min-h-screen flex items-center justify-center bg-gray-50">
+          <div className="text-center">
+            <h1 className="text-3xl font-bold mb-4 text-gray-800">
+              Access Denied
+            </h1>
+            <p className="text-gray-600">
+              You don't have access to the admin portal.
+            </p>
+            <Button onClick={() => navigate("/dashboard")} className="mt-4">
+              Back to Dashboard
+            </Button>
+          </div>
+        </div>
+      </PageTransition>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-muted/30 p-6">
-      <div className="max-w-7xl mx-auto space-y-6">
+    <PageTransition>
+      <div className="min-h-screen bg-gray-50">
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold">Admin Dashboard</h1>
-            <p className="text-muted-foreground">Manage all FlokiPOS clients and system operations</p>
+        <div className="bg-white shadow-sm border-b">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex justify-between items-center py-4">
+              <div className="flex items-center space-x-4">
+                <div className="h-10 w-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                  <Shield className="h-6 w-6 text-purple-600" />
+                </div>
+                <div>
+                  <h1 className="text-2xl font-bold text-gray-900">
+                    Admin Portal
+                  </h1>
+                  <p className="text-sm text-gray-500">
+                    {businessOwner.name} - System Administration
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center space-x-4">
+                <div className="text-right">
+                  <p className="text-sm font-medium text-gray-900">
+                    {businessOwner.name}
+                  </p>
+                  <p className="text-xs text-gray-500">Business Owner</p>
+                </div>
+                <Button
+                  variant="outline"
+                  onClick={handleLogout}
+                  disabled={loading}
+                  className="text-red-600 hover:text-red-700"
+                >
+                  <LogOut className="h-4 w-4 mr-2" />
+                  Logout
+                </Button>
+              </div>
+            </div>
           </div>
-          <Button>
-            <Plus className="h-4 w-4 mr-2" />
-            Add Client
-          </Button>
-        </div>
-
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {stats.map((stat, index) => (
-            <Card key={index} className="hover-lift">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
-                <stat.icon className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{stat.value}</div>
-                <p className="text-xs text-success">
-                  {stat.change} from last month
-                </p>
-              </CardContent>
-            </Card>
-          ))}
         </div>
 
         {/* Main Content */}
-        <Tabs defaultValue="clients" className="space-y-4">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="clients">Clients</TabsTrigger>
-            <TabsTrigger value="billing">Billing</TabsTrigger>
-            <TabsTrigger value="system">System</TabsTrigger>
-            <TabsTrigger value="settings">Settings</TabsTrigger>
-          </TabsList>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          {/* Welcome Section */}
+          <div className="mb-8">
+            <h2 className="text-3xl font-bold text-gray-900 mb-2">
+              Welcome back, {businessOwner.name}!
+            </h2>
+            <p className="text-gray-600">
+              Manage your business operations and system settings
+            </p>
+          </div>
 
-          <TabsContent value="clients">
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle>Client Management</CardTitle>
-                    <CardDescription>Manage all registered clients and their subscriptions</CardDescription>
+          {/* Quick Actions */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+              <CardContent className="p-6">
+                <div className="flex items-center space-x-4">
+                  <div className="h-12 w-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                    <Users className="h-6 w-6 text-blue-600" />
                   </div>
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      placeholder="Search clients..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="pl-9 w-64"
-                    />
+                  <div>
+                    <h3 className="font-semibold text-gray-900">
+                      Staff Management
+                    </h3>
+                    <p className="text-sm text-gray-500">Manage team members</p>
                   </div>
                 </div>
+              </CardContent>
+            </Card>
+
+            <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+              <CardContent className="p-6">
+                <div className="flex items-center space-x-4">
+                  <div className="h-12 w-12 bg-green-100 rounded-lg flex items-center justify-center">
+                    <BarChart3 className="h-6 w-6 text-green-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-gray-900">Analytics</h3>
+                    <p className="text-sm text-gray-500">Business insights</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+              <CardContent className="p-6">
+                <div className="flex items-center space-x-4">
+                  <div className="h-12 w-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                    <Settings className="h-6 w-6 text-purple-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-gray-900">Settings</h3>
+                    <p className="text-sm text-gray-500">
+                      System configuration
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+              <CardContent className="p-6">
+                <div className="flex items-center space-x-4">
+                  <div className="h-12 w-12 bg-orange-100 rounded-lg flex items-center justify-center">
+                    <Activity className="h-6 w-6 text-orange-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-gray-900">
+                      Activity Log
+                    </h3>
+                    <p className="text-sm text-gray-500">System activity</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Stats Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                  Total Revenue
+                </CardTitle>
+                <DollarSign className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Business</TableHead>
-                      <TableHead>Owner</TableHead>
-                      <TableHead>Plan</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Revenue</TableHead>
-                      <TableHead>Joined</TableHead>
-                      <TableHead>Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredClients.map((client) => (
-                      <TableRow key={client.id}>
-                        <TableCell>
-                          <div>
-                            <p className="font-medium">{client.name}</p>
-                            <p className="text-sm text-muted-foreground">{client.email}</p>
-                          </div>
-                        </TableCell>
-                        <TableCell>{client.owner}</TableCell>
-                        <TableCell>
-                          <Badge className={getPlanColor(client.plan)}>
-                            {client.plan}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <Badge className={getStatusColor(client.status)}>
-                            {client.status}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="font-medium">{client.revenue}</TableCell>
-                        <TableCell>{client.joinDate}</TableCell>
-                        <TableCell>
-                          <div className="flex items-center space-x-2">
-                            <Button size="sm" variant="outline">
-                              <Eye className="h-3 w-3" />
-                            </Button>
-                            <Button size="sm" variant="outline">
-                              <Settings className="h-3 w-3" />
-                            </Button>
-                            <Button size="sm" variant="outline">
-                              <Ban className="h-3 w-3" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                <div className="text-2xl font-bold">$45,231.89</div>
+                <p className="text-xs text-muted-foreground">
+                  +20.1% from last month
+                </p>
               </CardContent>
             </Card>
-          </TabsContent>
 
-          <TabsContent value="billing">
             <Card>
-              <CardHeader>
-                <CardTitle>Billing Overview</CardTitle>
-                <CardDescription>Monitor subscription payments and revenue</CardDescription>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                  Active Staff
+                </CardTitle>
+                <Users className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                  <Card>
-                    <CardContent className="p-4">
-                      <div className="text-center">
-                        <p className="text-2xl font-bold text-success">$89,432</p>
-                        <p className="text-sm text-muted-foreground">This Month</p>
-                      </div>
-                    </CardContent>
-                  </Card>
-                  <Card>
-                    <CardContent className="p-4">
-                      <div className="text-center">
-                        <p className="text-2xl font-bold text-primary">$78,291</p>
-                        <p className="text-sm text-muted-foreground">Last Month</p>
-                      </div>
-                    </CardContent>
-                  </Card>
-                  <Card>
-                    <CardContent className="p-4">
-                      <div className="text-center">
-                        <p className="text-2xl font-bold text-warning">$12,847</p>
-                        <p className="text-sm text-muted-foreground">Outstanding</p>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
-                
-                <div className="text-center py-8 text-muted-foreground">
-                  <DollarSign className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                  <p>Detailed billing reports will be displayed here</p>
-                </div>
+                <div className="text-2xl font-bold">12</div>
+                <p className="text-xs text-muted-foreground">
+                  +2 from last month
+                </p>
               </CardContent>
             </Card>
-          </TabsContent>
 
-          <TabsContent value="system">
             <Card>
-              <CardHeader>
-                <CardTitle>System Health</CardTitle>
-                <CardDescription>Monitor system performance and status</CardDescription>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                  Total Orders
+                </CardTitle>
+                <TrendingUp className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <Card>
-                    <CardContent className="p-4">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="font-medium">API Status</p>
-                          <p className="text-sm text-muted-foreground">All services operational</p>
-                        </div>
-                        <Badge className="bg-success text-success-foreground">Healthy</Badge>
-                      </div>
-                    </CardContent>
-                  </Card>
-                  <Card>
-                    <CardContent className="p-4">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="font-medium">Database</p>
-                          <p className="text-sm text-muted-foreground">Response time: 12ms</p>
-                        </div>
-                        <Badge className="bg-success text-success-foreground">Optimal</Badge>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
+                <div className="text-2xl font-bold">1,234</div>
+                <p className="text-xs text-muted-foreground">
+                  +15% from last month
+                </p>
               </CardContent>
             </Card>
-          </TabsContent>
 
-          <TabsContent value="settings">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                  System Health
+                </CardTitle>
+                <Activity className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">98.5%</div>
+                <p className="text-xs text-muted-foreground">
+                  All systems operational
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* System Overview */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
             <Card>
               <CardHeader>
-                <CardTitle>System Settings</CardTitle>
-                <CardDescription>Configure global system preferences</CardDescription>
+                <CardTitle>Recent System Activity</CardTitle>
+                <CardDescription>
+                  Latest system events and user actions
+                </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-medium">Maintenance Mode</p>
-                    <p className="text-sm text-muted-foreground">Disable client access for updates</p>
-                  </div>
-                  <Switch />
-                </div>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-medium">Auto Billing</p>
-                    <p className="text-sm text-muted-foreground">Automatically charge subscriptions</p>
-                  </div>
-                  <Switch defaultChecked />
-                </div>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-medium">Email Notifications</p>
-                    <p className="text-sm text-muted-foreground">Send system alerts via email</p>
-                  </div>
-                  <Switch defaultChecked />
+              <CardContent>
+                <div className="space-y-4">
+                  {[
+                    {
+                      action: "Staff login",
+                      user: "John Doe",
+                      time: "2 min ago",
+                    },
+                    {
+                      action: "New sale completed",
+                      user: "Cashier 1",
+                      time: "5 min ago",
+                    },
+                    {
+                      action: "Settings updated",
+                      user: "Admin",
+                      time: "10 min ago",
+                    },
+                    {
+                      action: "Report generated",
+                      user: "Manager",
+                      time: "15 min ago",
+                    },
+                    {
+                      action: "Backup completed",
+                      user: "System",
+                      time: "1 hour ago",
+                    },
+                  ].map((activity, i) => (
+                    <div
+                      key={i}
+                      className="flex items-center justify-between p-3 border rounded-lg"
+                    >
+                      <div>
+                        <p className="font-medium text-sm">{activity.action}</p>
+                        <p className="text-xs text-gray-500">
+                          by {activity.user}
+                        </p>
+                      </div>
+                      <span className="text-xs text-gray-400">
+                        {activity.time}
+                      </span>
+                    </div>
+                  ))}
                 </div>
               </CardContent>
             </Card>
-          </TabsContent>
-        </Tabs>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Quick Actions</CardTitle>
+                <CardDescription>Common administrative tasks</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  <Button variant="outline" className="w-full justify-start">
+                    <Users className="h-4 w-4 mr-2" />
+                    Add New Staff Member
+                  </Button>
+                  <Button variant="outline" className="w-full justify-start">
+                    <Settings className="h-4 w-4 mr-2" />
+                    System Settings
+                  </Button>
+                  <Button variant="outline" className="w-full justify-start">
+                    <BarChart3 className="h-4 w-4 mr-2" />
+                    Generate Reports
+                  </Button>
+                  <Button variant="outline" className="w-full justify-start">
+                    <Activity className="h-4 w-4 mr-2" />
+                    View Activity Log
+                  </Button>
+                  <Button variant="outline" className="w-full justify-start">
+                    <Shield className="h-4 w-4 mr-2" />
+                    Security Settings
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Business Overview */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Business Overview</CardTitle>
+              <CardDescription>
+                Key metrics and performance indicators
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="text-center">
+                  <div className="text-3xl font-bold text-blue-600 mb-2">
+                    $12,345
+                  </div>
+                  <p className="text-sm text-gray-600">Monthly Revenue</p>
+                </div>
+                <div className="text-center">
+                  <div className="text-3xl font-bold text-green-600 mb-2">
+                    156
+                  </div>
+                  <p className="text-sm text-gray-600">Total Customers</p>
+                </div>
+                <div className="text-center">
+                  <div className="text-3xl font-bold text-purple-600 mb-2">
+                    89%
+                  </div>
+                  <p className="text-sm text-gray-600">Customer Satisfaction</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
-    </div>
+    </PageTransition>
   );
 };
 
