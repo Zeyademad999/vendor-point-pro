@@ -51,8 +51,9 @@ router.post("/image", upload.single("file"), (req, res) => {
             });
         }
 
-        // Return the file URL with full backend URL
-        const fileUrl = `http://localhost:3001/uploads/${req.file.filename}`;
+        // Return the file URL with proper base URL
+        const baseUrl = process.env.API_BASE_URL || `http://localhost:3001`;
+        const fileUrl = `${baseUrl}/uploads/${req.file.filename}`;
 
         res.json({
             success: true,
@@ -79,8 +80,9 @@ router.post("/images", upload.array("files", 10), (req, res) => {
             });
         }
 
+        const baseUrl = process.env.API_BASE_URL || `http://localhost:3001`;
         const fileUrls = req.files.map(
-            (file) => `http://localhost:3001/uploads/${file.filename}`
+            (file) => `${baseUrl}/uploads/${file.filename}`
         );
 
         res.json({

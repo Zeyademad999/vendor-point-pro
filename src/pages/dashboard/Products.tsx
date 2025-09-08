@@ -58,6 +58,7 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { productService, Product, Category } from "@/services/products";
+import { apiService } from "@/services/api";
 import { useAuth } from "@/contexts/AuthContext";
 
 const Products = () => {
@@ -132,18 +133,12 @@ const Products = () => {
 
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
-        const formData = new FormData();
-        formData.append("file", file);
 
-        // Upload to backend
-        const response = await fetch("http://localhost:3001/api/upload/image", {
-          method: "POST",
-          body: formData,
-        });
+        // Use the API service for upload
+        const response = await apiService.upload("/upload/image", file);
 
-        if (response.ok) {
-          const result = await response.json();
-          uploadedUrls.push(result.url);
+        if (response.success && (response as any).url) {
+          uploadedUrls.push((response as any).url);
         }
       }
 
@@ -185,14 +180,22 @@ const Products = () => {
 
   const removeImage = (index: number) => {
     if (isEditMode && editingProduct) {
+      const updatedImages = (editingProduct.images || []).filter(
+        (_, i) => i !== index
+      );
       setEditingProduct((prev) =>
         prev
           ? {
               ...prev,
-              images: (prev.images || []).filter((_, i) => i !== index),
+              images: updatedImages,
             }
           : null
       );
+      // Also update newProduct.images to ensure the update is sent to backend
+      setNewProduct((prev) => ({
+        ...prev,
+        images: updatedImages,
+      }));
     } else {
       setNewProduct((prev) => ({
         ...prev,
@@ -594,13 +597,12 @@ const Products = () => {
                     </div>
                   )}
 
-                {/* Show existing images count for edit mode */}
+                {/* Show image count for edit mode */}
                 {isEditMode &&
-                  editingProduct &&
-                  Array.isArray(editingProduct.images) &&
-                  editingProduct.images.length > 0 && (
+                  newProduct.images &&
+                  newProduct.images.length > 0 && (
                     <div className="mt-2 text-sm text-gray-600">
-                      {editingProduct.images.length} existing image(s)
+                      {newProduct.images.length} image(s) will be saved
                     </div>
                   )}
               </div>
