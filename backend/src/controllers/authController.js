@@ -66,9 +66,15 @@ const logPortalAccess = async(
 // Register new user
 const register = async(req, res) => {
     try {
+        console.log("Registration attempt:", {
+            email: req.body.email,
+            name: req.body.name,
+        });
+
         // Check for validation errors
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
+            console.log("Validation errors:", errors.array());
             return res.status(400).json({
                 success: false,
                 message: "Validation failed",
@@ -165,9 +171,12 @@ const register = async(req, res) => {
 // Login user (supports business owners and staff/cashier)
 const login = async(req, res) => {
     try {
+        console.log("Login attempt:", { email: req.body.email });
+
         // Check for validation errors
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
+            console.log("Login validation errors:", errors.array());
             return res.status(400).json({
                 success: false,
                 message: "Validation failed",
@@ -179,11 +188,14 @@ const login = async(req, res) => {
 
         // First, try to find a business owner/client by email
         let user = await db("users").where({ email }).first();
+        console.log("User found:", user ? "Yes" : "No");
 
         if (user) {
             // Check password for business owner
             const isPasswordValid = await bcrypt.compare(password, user.password);
+            console.log("Password valid:", isPasswordValid);
             if (!isPasswordValid) {
+                console.log("Invalid password for user:", email);
                 return res.status(401).json({
                     success: false,
                     message: "Invalid email or password",

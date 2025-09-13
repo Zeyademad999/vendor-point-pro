@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { clientService, WebsiteConfig } from "@/services/clients";
 import EmbeddedPOS from "@/components/EmbeddedPOS";
+import OfflinePOS from "@/components/OfflinePOS";
 import {
   ShoppingCart,
   DollarSign,
@@ -21,7 +22,10 @@ import {
   TrendingUp,
   ArrowRight,
   LogOut,
+  Wifi,
+  WifiOff,
 } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import PageTransition from "@/components/PageTransition";
 
 const CashierPortal = () => {
@@ -125,12 +129,36 @@ const CashierPortal = () => {
 
         {/* Main Content */}
         <main className="flex-1">
-          <EmbeddedPOS
-            onTransactionComplete={() => {
-              // Refresh stats after transaction
-              loadCashierData();
-            }}
-          />
+          <Tabs defaultValue="online" className="h-full">
+            <div className="p-4 border-b">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="online" className="flex items-center gap-2">
+                  <Wifi className="h-4 w-4" />
+                  Online POS
+                </TabsTrigger>
+                <TabsTrigger
+                  value="offline"
+                  className="flex items-center gap-2"
+                >
+                  <WifiOff className="h-4 w-4" />
+                  Offline POS
+                </TabsTrigger>
+              </TabsList>
+            </div>
+
+            <TabsContent value="online" className="h-full m-0">
+              <EmbeddedPOS
+                onTransactionComplete={() => {
+                  // Refresh stats after transaction
+                  loadCashierData();
+                }}
+              />
+            </TabsContent>
+
+            <TabsContent value="offline" className="h-full m-0">
+              <OfflinePOS />
+            </TabsContent>
+          </Tabs>
         </main>
       </div>
     </PageTransition>

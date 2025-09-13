@@ -2,7 +2,14 @@ import axios, { AxiosInstance, AxiosResponse, AxiosError } from "axios";
 
 // API Configuration
 const API_BASE_URL =
-  import.meta.env.VITE_API_URL || "http://localhost:3001/api";
+  import.meta.env.VITE_API_URL ||
+  (import.meta.env.DEV ? "http://localhost:3001/api" : null);
+
+if (!API_BASE_URL) {
+  throw new Error(
+    "VITE_API_URL environment variable is required for production"
+  );
+}
 
 // Retry configuration
 const RETRY_CONFIG = {

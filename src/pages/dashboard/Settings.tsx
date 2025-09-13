@@ -29,9 +29,13 @@ import {
   Palette,
   Save,
   Loader2,
+  Mail,
+  DollarSign,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
+import EmailManager from "@/components/EmailManager";
+import CurrencyConverter from "@/components/CurrencyConverter";
 
 interface BusinessSettings {
   businessName: string;
@@ -42,6 +46,11 @@ interface BusinessSettings {
   currency: string;
   timezone: string;
   taxRate: number;
+  priceRounding: {
+    enabled: boolean;
+    method: "round" | "ceil" | "floor";
+    decimalPlaces: number;
+  };
 }
 
 interface UserSettings {
@@ -83,6 +92,11 @@ const Settings = () => {
     currency: "EGP",
     timezone: "America/New_York",
     taxRate: 8.5,
+    priceRounding: {
+      enabled: true,
+      method: "round",
+      decimalPlaces: 2,
+    },
   });
 
   const [userSettings, setUserSettings] = useState<UserSettings>({
@@ -251,7 +265,7 @@ const Settings = () => {
       </div>
 
       <Tabs defaultValue="business" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="business" className="flex items-center space-x-2">
             <Store className="h-4 w-4" />
             <span>Business</span>
@@ -270,6 +284,14 @@ const Settings = () => {
           <TabsTrigger value="security" className="flex items-center space-x-2">
             <Shield className="h-4 w-4" />
             <span>Security</span>
+          </TabsTrigger>
+          <TabsTrigger value="email" className="flex items-center space-x-2">
+            <Mail className="h-4 w-4" />
+            <span>Email</span>
+          </TabsTrigger>
+          <TabsTrigger value="currency" className="flex items-center space-x-2">
+            <DollarSign className="h-4 w-4" />
+            <span>Currency</span>
           </TabsTrigger>
         </TabsList>
 
@@ -346,6 +368,97 @@ const Settings = () => {
                       <SelectItem value="CAD">CAD (C$)</SelectItem>
                     </SelectContent>
                   </Select>
+                </div>
+                
+                {/* Price Rounding Settings */}
+                <div className="space-y-4 p-4 border rounded-lg bg-gray-50">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label className="text-base font-medium">Price Rounding</Label>
+                      <p className="text-sm text-gray-600">Configure how prices are rounded</p>
+                    </div>
+                    <Switch
+                      checked={businessSettings.priceRounding.enabled}
+                      onCheckedChange={(enabled) =>
+                        setBusinessSettings({
+                          ...businessSettings,
+                          priceRounding: {
+                            ...businessSettings.priceRounding,
+                            enabled,
+                          },
+                        })
+                      }
+                    />
+                  </div>
+                  
+                  {businessSettings.priceRounding.enabled && (
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>Rounding Method</Label>
+                        <Select
+                          value={businessSettings.priceRounding.method}
+                          onValueChange={(method: "round" | "ceil" | "floor") =>
+                            setBusinessSettings({
+                              ...businessSettings,
+                              priceRounding: {
+                                ...businessSettings.priceRounding,
+                                method,
+                              },
+                            })
+                          }
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="round">Round (0.5 → 1)</SelectItem>
+                            <SelectItem value="ceil">Round Up (0.1 → 1)</SelectItem>
+                            <SelectItem value="floor">Round Down (0.9 → 0)</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label>Decimal Places</Label>
+                        <Select
+                          value={businessSettings.priceRounding.decimalPlaces.toString()}
+                          onValueChange={(decimalPlaces) =>
+                            setBusinessSettings({
+                              ...businessSettings,
+                              priceRounding: {
+                                ...businessSettings.priceRounding,
+                                decimalPlaces: parseInt(decimalPlaces),
+                              },
+                            })
+                          }
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="0">0 (Whole numbers)</SelectItem>
+                            <SelectItem value="1">1 (X.X)</SelectItem>
+                            <SelectItem value="2">2 (X.XX)</SelectItem>
+                            <SelectItem value="3">3 (X.XXX)</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {businessSettings.priceRounding.enabled && (
+                    <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                      <p className="text-sm text-blue-800">
+                        <strong>Example:</strong> Price 123.456 with {businessSettings.priceRounding.method} to {businessSettings.priceRounding.decimalPlaces} decimal places = {
+                          businessSettings.priceRounding.method === "round" 
+                            ? "123." + "0".repeat(businessSettings.priceRounding.decimalPlaces)
+                            : businessSettings.priceRounding.method === "ceil"
+                            ? "124." + "0".repeat(businessSettings.priceRounding.decimalPlaces)
+                            : "123." + "0".repeat(businessSettings.priceRounding.decimalPlaces)
+                        }
+                      </p>
+                    </div>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="timezone">Timezone</Label>
@@ -749,6 +862,16 @@ const Settings = () => {
               </Button>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* Email Settings */}
+        <TabsContent value="email" className="space-y-6">
+          <EmailManager />
+        </TabsContent>
+
+        {/* Currency Settings */}
+        <TabsContent value="currency" className="space-y-6">
+          <CurrencyConverter />
         </TabsContent>
       </Tabs>
     </div>

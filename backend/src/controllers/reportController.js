@@ -868,9 +868,9 @@ const getTransactions = async(req, res) => {
         let query = db("receipts")
             .select(
                 "receipts.*",
-                "customers.name as customer_name",
-                "customers.email as customer_email",
-                "customers.phone as customer_phone",
+                "customers.name as customer_name_from_table",
+                "customers.email as customer_email_from_table",
+                "customers.phone as customer_phone_from_table",
                 "staff.name as staff_name"
             )
             .leftJoin("customers", "receipts.customer_id", "customers.id")
@@ -883,7 +883,9 @@ const getTransactions = async(req, res) => {
             query = query.where(function() {
                 this.where("receipts.receipt_number", "like", `%${search}%`)
                     .orWhere("customers.name", "like", `%${search}%`)
-                    .orWhere("customers.email", "like", `%${search}%`);
+                    .orWhere("customers.email", "like", `%${search}%`)
+                    .orWhere("receipts.customer_name", "like", `%${search}%`)
+                    .orWhere("receipts.customer_email", "like", `%${search}%`);
             });
         }
 
@@ -930,23 +932,39 @@ const getTransactions = async(req, res) => {
             .offset(offset);
 
         // Format transactions
-        const formattedTransactions = transactions.map((transaction) => ({
-            id: transaction.id,
-            receipt_number: transaction.receipt_number,
-            customer_name: transaction.customer_name || "Walk-in Customer",
-            customer_email: transaction.customer_email || "",
-            customer_phone: transaction.customer_phone || "",
-            items: transaction.items,
-            total_amount: parseFloat(transaction.total_amount),
-            payment_method: transaction.payment_method,
-            payment_status: transaction.payment_status,
-            order_status: transaction.order_status || "completed",
-            source: transaction.source || "pos",
-            created_at: transaction.created_at,
-            updated_at: transaction.updated_at,
-            staff_name: transaction.staff_name,
-            notes: transaction.notes,
-        }));
+        const formattedTransactions = transactions.map((transaction) => {
+            // Use customer information from receipts table if joined customer data is not available
+            const customerName =
+                transaction.customer_name_from_table ||
+                transaction.customer_name ||
+                "Walk-in Customer";
+            const customerEmail =
+                transaction.customer_email_from_table ||
+                transaction.customer_email ||
+                "";
+            const customerPhone =
+                transaction.customer_phone_from_table ||
+                transaction.customer_phone ||
+                "";
+
+            return {
+                id: transaction.id,
+                receipt_number: transaction.receipt_number,
+                customer_name: customerName,
+                customer_email: customerEmail,
+                customer_phone: customerPhone,
+                items: transaction.items,
+                total_amount: parseFloat(transaction.total_amount),
+                payment_method: transaction.payment_method,
+                payment_status: transaction.payment_status,
+                order_status: transaction.order_status || "completed",
+                source: transaction.source || "pos",
+                created_at: transaction.created_at,
+                updated_at: transaction.updated_at,
+                staff_name: transaction.staff_name,
+                notes: transaction.notes,
+            };
+        });
 
         const totalPages = Math.ceil(total / parseInt(limit));
 

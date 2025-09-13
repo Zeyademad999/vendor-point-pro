@@ -55,6 +55,8 @@ import {
   Loader2,
   Upload,
   X,
+  Barcode,
+  QrCode,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { productService, Product, Category } from "@/services/products";
@@ -74,6 +76,7 @@ const Products = () => {
     alert_level: "",
     cost_price: "",
     images: [] as string[],
+    barcode: "",
   });
   const [selectedImages, setSelectedImages] = useState<File[]>([]);
   const [uploadingImages, setUploadingImages] = useState(false);
@@ -84,6 +87,21 @@ const Products = () => {
   const [productToDelete, setProductToDelete] = useState<Product | null>(null);
   const { toast } = useToast();
   const { isAuthenticated } = useAuth();
+
+  // Generate barcode function
+  const generateBarcode = () => {
+    // Generate a 13-digit EAN barcode
+    const timestamp = Date.now().toString();
+    const random = Math.floor(Math.random() * 1000)
+      .toString()
+      .padStart(3, "0");
+    const barcode = (timestamp.slice(-10) + random).padStart(13, "0");
+    setNewProduct({ ...newProduct, barcode });
+    toast({
+      title: "Barcode Generated",
+      description: `Generated barcode: ${barcode}`,
+    });
+  };
 
   // Fetch products and categories on component mount
   useEffect(() => {
@@ -545,6 +563,36 @@ const Products = () => {
                   />
                 </div>
               </div>
+              <div className="space-y-2">
+                <Label>Barcode</Label>
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="Enter barcode or generate one"
+                    value={newProduct.barcode}
+                    onChange={(e) =>
+                      setNewProduct({
+                        ...newProduct,
+                        barcode: e.target.value,
+                      })
+                    }
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={generateBarcode}
+                    className="flex items-center gap-2"
+                  >
+                    <Barcode className="h-4 w-4" />
+                    Generate
+                  </Button>
+                </div>
+                {newProduct.barcode && (
+                  <div className="flex items-center gap-2 text-sm text-gray-600">
+                    <QrCode className="h-4 w-4" />
+                    <span>Barcode: {newProduct.barcode}</span>
+                  </div>
+                )}
+              </div>
 
               {/* Image Upload Section */}
               <div className="space-y-2">
@@ -716,6 +764,7 @@ const Products = () => {
                 <TableHead>Stock</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Cost Price</TableHead>
+                <TableHead>Barcode</TableHead>
                 <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -771,6 +820,20 @@ const Products = () => {
                       </Badge>
                     </TableCell>
                     <TableCell>EGP {product.cost_price || 0}</TableCell>
+                    <TableCell>
+                      {product.barcode ? (
+                        <div className="flex items-center gap-2">
+                          <Barcode className="h-4 w-4 text-gray-500" />
+                          <span className="text-sm font-mono">
+                            {product.barcode}
+                          </span>
+                        </div>
+                      ) : (
+                        <span className="text-gray-400 text-sm">
+                          No barcode
+                        </span>
+                      )}
+                    </TableCell>
                     <TableCell>
                       <div className="flex items-center space-x-2">
                         <Button

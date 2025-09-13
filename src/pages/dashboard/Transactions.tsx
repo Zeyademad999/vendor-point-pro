@@ -40,6 +40,7 @@ import {
 } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
+import RefundScanner from "@/components/RefundScanner";
 import { receiptService } from "@/services/receipts";
 import { reportService, TransactionData } from "@/services/reports";
 import {
@@ -425,6 +426,7 @@ const Transactions: React.FC = () => {
               Delete Selected ({selectedTransactions.length})
             </Button>
           )}
+          <RefundScanner />
           <Button variant="outline" size="sm" onClick={loadTransactions}>
             <RefreshCw className="h-4 w-4 mr-2" />
             Refresh

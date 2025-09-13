@@ -49,10 +49,16 @@ app.use(
                 "http://localhost:8080",
                 "http://localhost:8081",
                 "http://localhost:8082",
-            ];
+                // Add your deployed frontend URL here
+                process.env.FRONTEND_URL,
+                process.env.CORS_ORIGIN,
+            ].filter(Boolean); // Remove undefined values
+
             if (allowedOrigins.indexOf(origin) !== -1) {
                 callback(null, true);
             } else {
+                console.log("CORS blocked origin:", origin);
+                console.log("Allowed origins:", allowedOrigins);
                 callback(new Error("Not allowed by CORS"));
             }
         },

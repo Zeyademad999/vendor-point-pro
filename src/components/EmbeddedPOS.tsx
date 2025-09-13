@@ -11,6 +11,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   ShoppingCart,
@@ -25,6 +31,10 @@ import {
   X,
   Package,
   Scissors,
+  QrCode,
+  Camera,
+  Barcode,
+  AlertTriangle,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { productService } from "@/services/products";
@@ -54,14 +64,81 @@ interface EmbeddedPOSProps {
 const EmbeddedPOS: React.FC<EmbeddedPOSProps> = ({ onTransactionComplete }) => {
   const { toast } = useToast();
 
+  // Barcode search function
+  const handleBarcodeSearch = async () => {
+    if (!barcodeInput.trim()) return;
+
+    try {
+      // Search for product by barcode
+      const products = await productService.getProducts({
+        search: barcodeInput,
+      });
+      const foundProduct = products.data.find(
+        (product: any) => product.barcode === barcodeInput
+      );
+
+      if (foundProduct) {
+        // Add product to cart
+        const existingItem = cart.find(
+          (item) => item.id === foundProduct.id.toString()
+        );
+        if (existingItem) {
+          setCart((prev) =>
+            prev.map((item) =>
+              item.id === foundProduct.id.toString()
+                ? { ...item, quantity: item.quantity + 1 }
+                : item
+            )
+          );
+        } else {
+          setCart((prev) => [
+            ...prev,
+            {
+              id: foundProduct.id.toString(),
+              name: foundProduct.name,
+              price: foundProduct.price,
+              quantity: 1,
+              type: "product" as const,
+              image: foundProduct.images?.[0],
+            },
+          ]);
+        }
+
+        toast({
+          title: "Product Found",
+          description: `Added ${foundProduct.name} to cart`,
+        });
+
+        setBarcodeInput("");
+      } else {
+        toast({
+          title: "Product Not Found",
+          description: "No product found with this barcode",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Search Error",
+        description: "Failed to search for product",
+        variant: "destructive",
+      });
+    }
+  };
+
   // State management
   const [cart, setCart] = useState<CartItem[]>([]);
   const [selectedCustomer, setSelectedCustomer] = useState<string>("none");
+  const [customerName, setCustomerName] = useState("");
+  const [customerPhone, setCustomerPhone] = useState("");
+  const [showCustomerModal, setShowCustomerModal] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<
     "cash" | "card" | "mobile" | "other"
   >("cash");
   const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState("products");
+  const [barcodeInput, setBarcodeInput] = useState("");
+  const [showBarcodeScanner, setShowBarcodeScanner] = useState(false);
   const [discountType, setDiscountType] = useState<"fixed" | "percentage">(
     "fixed"
   );
@@ -249,6 +326,17 @@ const EmbeddedPOS: React.FC<EmbeddedPOSProps> = ({ onTransactionComplete }) => {
       return;
     }
 
+    // Check for mandatory customer data
+    if (!customerName.trim() || !customerPhone.trim()) {
+      setShowCustomerModal(true);
+      toast({
+        title: "Customer Information Required",
+        description: "Please provide customer name and phone number",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       setProcessingPayment(true);
 
@@ -313,44 +401,122 @@ const EmbeddedPOS: React.FC<EmbeddedPOSProps> = ({ onTransactionComplete }) => {
   const downloadReceipt = () => {
     if (!lastReceipt) return;
 
-    const receiptText = `
-FlokiPOS Receipt
-================
+    // Create receipt content for PDF
+    const receiptContent = `
+      <html>
+        <head>
+          <style>
+            body { font-family: Arial, sans-serif; margin: 20px; }
+            .header { text-align: center; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 20px; }
+            .title { font-size: 24px; font-weight: bold; color: #2563eb; }
+            .subtitle { font-size: 12px; color: #666; }
+            .receipt-number { font-size: 14px; color: #666; margin-top: 5px; }
+            .customer-info { margin: 15px 0; }
+            .items { margin: 20px 0; }
+            .item { display: flex; justify-content: space-between; margin: 5px 0; }
+            .item-details { flex: 1; }
+            .item-price { font-weight: bold; }
+            .totals { border-top: 1px solid #ccc; padding-top: 10px; margin: 20px 0; }
+            .total-row { display: flex; justify-content: space-between; margin: 5px 0; }
+            .final-total { font-weight: bold; font-size: 18px; border-top: 2px solid #000; padding-top: 10px; }
+            .payment-info { text-align: center; margin: 20px 0; font-size: 12px; }
+            .footer { text-align: center; margin-top: 30px; font-size: 10px; color: #666; border-top: 1px solid #ccc; padding-top: 10px; }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <div class="title">FlokiPOS</div>
+            <div class="subtitle">Point of Sale System</div>
+            <div class="receipt-number">Receipt #${
+              lastReceipt.receipt_number || lastReceipt.id
+            }</div>
+          </div>
 
-Receipt #: ${lastReceipt.receipt_number || lastReceipt.id}
-Date: ${new Date().toLocaleDateString()}
-Time: ${new Date().toLocaleTimeString()}
-${lastReceipt.customer_name ? `Customer: ${lastReceipt.customer_name}` : ""}
-${lastReceipt.customer_email ? `Email: ${lastReceipt.customer_email}` : ""}
-Payment Method: ${lastReceipt.payment_method || paymentMethod}
+          ${
+            lastReceipt.customer_name
+              ? `
+            <div class="customer-info">
+              <strong>Customer:</strong> ${lastReceipt.customer_name}
+              ${
+                lastReceipt.customer_email
+                  ? `<br><strong>Email:</strong> ${lastReceipt.customer_email}`
+                  : ""
+              }
+            </div>
+          `
+              : ""
+          }
 
-Items:
-${cart
-  .map(
-    (item) =>
-      `  ${item.name} x ${item.quantity} - $${(
-        item.price * item.quantity
-      ).toFixed(2)}`
-  )
-  .join("\n")}
+          <div class="items">
+            <h4>Items:</h4>
+            ${
+              lastReceipt.items && Array.isArray(lastReceipt.items)
+                ? lastReceipt.items
+                    .map(
+                      (item: any) => `
+                <div class="item">
+                  <div class="item-details">
+                    <strong>${item.name}</strong> x${
+                        item.quantity
+                      } @ EGP ${item.price.toFixed(2)}
+                  </div>
+                  <div class="item-price">EGP ${item.total.toFixed(2)}</div>
+                </div>
+              `
+                    )
+                    .join("")
+                : "<p>No items found</p>"
+            }
+          </div>
 
-Subtotal: $${lastReceipt.subtotal?.toFixed(2) || getSubtotal().toFixed(2)}
-Tax: $${lastReceipt.tax?.toFixed(2) || getTax().toFixed(2)}
-Discount: -$${lastReceipt.discount?.toFixed(2) || getDiscount().toFixed(2)}
-Total: $${lastReceipt.total?.toFixed(2)}
+          <div class="totals">
+            <div class="total-row">
+              <span>Subtotal:</span>
+              <span>EGP {(lastReceipt.subtotal || 0).toFixed(2)}</span>
+            </div>
+            <div class="total-row">
+              <span>Tax:</span>
+              <span>EGP {(lastReceipt.tax || 0).toFixed(2)}</span>
+            </div>
+            ${
+              (lastReceipt.discount || 0) > 0
+                ? `
+            <div class="total-row" style="color: #059669;">
+              <span>Discount:</span>
+              <span>-EGP {(lastReceipt.discount || 0).toFixed(2)}</span>
+            </div>
+            `
+                : ""
+            }
+            <div class="total-row final-total">
+              <span>Total:</span>
+              <span>EGP {(lastReceipt.total || 0).toFixed(2)}</span>
+            </div>
+          </div>
 
-Payment Status: Completed
-Transaction ID: ${lastReceipt.id}
+          <div class="payment-info">
+            <p><strong>Payment Method:</strong> ${(
+              lastReceipt.payment_method || "cash"
+            ).toUpperCase()}</p>
+            <p><strong>Date:</strong> ${new Date(
+              lastReceipt.created_at || Date.now()
+            ).toLocaleString()}</p>
+          </div>
 
-Thank you for your business!
-FlokiPOS - Professional Point of Sale System
+          <div class="footer">
+            <p>Thank you for your business!</p>
+            <p>Powered by FlokiPOS</p>
+          </div>
+        </body>
+      </html>
     `;
 
-    const blob = new Blob([receiptText], { type: "text/plain" });
+    // Create blob and download
+    const blob = new Blob([receiptContent], { type: "text/html" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `receipt-${lastReceipt.receipt_number || lastReceipt.id}.txt`;
+    a.download = `receipt-${lastReceipt.receipt_number || lastReceipt.id}.html`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -392,8 +558,9 @@ FlokiPOS - Professional Point of Sale System
         <div className="w-2/3 flex flex-col border-r">
           {/* Search and Tabs */}
           <div className="p-4 border-b">
-            <div className="flex items-center space-x-4 mb-4">
-              <div className="relative flex-1">
+            <div className="space-y-3 mb-4">
+              {/* Regular Search */}
+              <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                 <Input
                   placeholder="Search products and services..."
@@ -402,6 +569,65 @@ FlokiPOS - Professional Point of Sale System
                   className="pl-10"
                 />
               </div>
+
+              {/* Barcode Search */}
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <Barcode className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                  <Input
+                    placeholder="Scan or enter barcode..."
+                    value={barcodeInput}
+                    onChange={(e) => setBarcodeInput(e.target.value)}
+                    onKeyPress={(e) =>
+                      e.key === "Enter" && handleBarcodeSearch()
+                    }
+                    className="pl-10"
+                  />
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleBarcodeSearch}
+                  disabled={!barcodeInput.trim()}
+                  className="flex items-center gap-2"
+                >
+                  <Search className="h-4 w-4" />
+                  Search
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowBarcodeScanner(!showBarcodeScanner)}
+                  className="flex items-center gap-2"
+                >
+                  <Camera className="h-4 w-4" />
+                  Scan
+                </Button>
+              </div>
+
+              {/* Barcode Scanner Mockup */}
+              {showBarcodeScanner && (
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center bg-gray-50">
+                  <Camera className="h-8 w-8 mx-auto text-gray-400 mb-2" />
+                  <p className="text-sm text-gray-600 mb-2">Barcode Scanner</p>
+                  <p className="text-xs text-gray-500">
+                    Point camera at barcode to scan
+                  </p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="mt-2"
+                    onClick={() => {
+                      // Mock barcode scan
+                      setBarcodeInput("1234567890123");
+                      setShowBarcodeScanner(false);
+                    }}
+                  >
+                    <QrCode className="h-4 w-4 mr-2" />
+                    Mock Scan
+                  </Button>
+                </div>
+              )}
             </div>
 
             <Tabs value={activeTab} onValueChange={setActiveTab}>
@@ -528,28 +754,38 @@ FlokiPOS - Professional Point of Sale System
               </div>
             )}
 
-            {/* Customer Selection */}
-            <div>
-              <label className="text-sm font-medium mb-2 block">Customer</label>
-              <Select
-                value={selectedCustomer}
-                onValueChange={setSelectedCustomer}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">No customer</SelectItem>
-                  {customers.map((customer) => (
-                    <SelectItem
-                      key={customer.id}
-                      value={customer.id.toString()}
-                    >
-                      {customer.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            {/* Customer Information - Mandatory */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-medium">Customer Information *</label>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowCustomerModal(true)}
+                >
+                  <User className="h-4 w-4 mr-1" />
+                  {customerName ? "Edit" : "Add"}
+                </Button>
+              </div>
+              
+              {customerName && customerPhone ? (
+                <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+                  <div className="flex items-center gap-2 text-green-800">
+                    <User className="h-4 w-4" />
+                    <span className="font-medium">{customerName}</span>
+                  </div>
+                  <p className="text-sm text-green-700 mt-1">{customerPhone}</p>
+                </div>
+              ) : (
+                <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                  <div className="flex items-center gap-2 text-yellow-800">
+                    <AlertTriangle className="h-4 w-4" />
+                    <span className="text-sm font-medium">Customer information required</span>
+                  </div>
+                  <p className="text-sm text-yellow-700 mt-1">Name and phone number are mandatory</p>
+                </div>
+              )}
             </div>
 
             {/* Payment Method */}
@@ -653,11 +889,11 @@ FlokiPOS - Professional Point of Sale System
       </div>
 
       {/* Receipt Modal */}
-      {showReceipt && lastReceipt && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-lg w-full mx-4 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-semibold">Receipt</h2>
+      <Dialog open={showReceipt} onOpenChange={setShowReceipt}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center justify-between">
+              <span>Receipt</span>
               <Button
                 variant="ghost"
                 size="sm"
@@ -668,9 +904,13 @@ FlokiPOS - Professional Point of Sale System
               >
                 <X className="h-4 w-4" />
               </Button>
-            </div>
-
-            <div className="space-y-4">
+            </DialogTitle>
+          </DialogHeader>
+          {lastReceipt && (
+            <div
+              id="receipt-content"
+              className="space-y-4 bg-white p-6 rounded-lg print:shadow-none print:p-0"
+            >
               {/* Branded Header */}
               <div className="text-center border-b pb-4">
                 <h2 className="text-2xl font-bold text-primary">FlokiPOS</h2>
@@ -705,11 +945,11 @@ FlokiPOS - Professional Point of Sale System
                       <div className="flex-1">
                         <span className="font-medium">{item.name}</span>
                         <span className="text-muted-foreground ml-2">
-                          x{item.quantity} @ ${item.price.toFixed(2)}
+                          x{item.quantity} @ EGP {item.price.toFixed(2)}
                         </span>
                       </div>
                       <span className="font-semibold">
-                        ${item.total.toFixed(2)}
+                        EGP {item.total.toFixed(2)}
                       </span>
                     </div>
                   ))
@@ -726,21 +966,21 @@ FlokiPOS - Professional Point of Sale System
               <div className="space-y-1 text-sm">
                 <div className="flex justify-between">
                   <span>Subtotal:</span>
-                  <span>${(lastReceipt.subtotal || 0).toFixed(2)}</span>
+                  <span>EGP {(lastReceipt.subtotal || 0).toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Tax:</span>
-                  <span>${(lastReceipt.tax || 0).toFixed(2)}</span>
+                  <span>EGP {(lastReceipt.tax || 0).toFixed(2)}</span>
                 </div>
                 {(lastReceipt.discount || 0) > 0 && (
                   <div className="flex justify-between text-green-600">
                     <span>Discount:</span>
-                    <span>-${(lastReceipt.discount || 0).toFixed(2)}</span>
+                    <span>-EGP {(lastReceipt.discount || 0).toFixed(2)}</span>
                   </div>
                 )}
                 <div className="flex justify-between font-bold text-lg border-t pt-2">
                   <span>Total:</span>
-                  <span>${(lastReceipt.total || 0).toFixed(2)}</span>
+                  <span>EGP {(lastReceipt.total || 0).toFixed(2)}</span>
                 </div>
               </div>
 
@@ -770,7 +1010,7 @@ FlokiPOS - Professional Point of Sale System
               </div>
 
               {/* Action Buttons */}
-              <div className="flex space-x-2 pt-4">
+              <div className="flex space-x-2 pt-4 print:hidden">
                 <Button className="flex-1" onClick={() => downloadReceipt()}>
                   Download PDF
                 </Button>
@@ -793,9 +1033,70 @@ FlokiPOS - Professional Point of Sale System
                 </Button>
               </div>
             </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Customer Data Modal */}
+      <Dialog open={showCustomerModal} onOpenChange={setShowCustomerModal}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <User className="h-5 w-5" />
+              Customer Information
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Customer Name *</label>
+              <Input
+                placeholder="Enter customer name"
+                value={customerName}
+                onChange={(e) => setCustomerName(e.target.value)}
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Phone Number *</label>
+              <Input
+                placeholder="Enter phone number"
+                value={customerPhone}
+                onChange={(e) => setCustomerPhone(e.target.value)}
+              />
+            </div>
+            
+            <div className="flex gap-2">
+              <Button
+                onClick={() => {
+                  if (customerName.trim() && customerPhone.trim()) {
+                    setShowCustomerModal(false);
+                    toast({
+                      title: "Customer Information Saved",
+                      description: "Customer details have been added",
+                    });
+                  } else {
+                    toast({
+                      title: "Missing Information",
+                      description: "Please provide both name and phone number",
+                      variant: "destructive",
+                    });
+                  }
+                }}
+                className="flex-1"
+              >
+                Save Customer
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => setShowCustomerModal(false)}
+              >
+                Cancel
+              </Button>
+            </div>
           </div>
-        </div>
-      )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
