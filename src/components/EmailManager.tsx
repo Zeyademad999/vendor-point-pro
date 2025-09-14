@@ -32,7 +32,7 @@ import {
   Mail,
   Send,
   Settings,
-  Template,
+  FileText,
   Users,
   Clock,
   CheckCircle,
@@ -41,6 +41,7 @@ import {
   Edit,
   Trash2,
   Eye,
+  Receipt,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -259,7 +260,7 @@ const EmailManager: React.FC = () => {
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
           <TabsTrigger value="templates" className="flex items-center gap-2">
-            <Template className="h-4 w-4" />
+            <FileText className="h-4 w-4" />
             Templates
           </TabsTrigger>
           <TabsTrigger value="campaigns" className="flex items-center gap-2">
