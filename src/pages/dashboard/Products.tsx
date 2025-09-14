@@ -69,6 +69,7 @@ const Products = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [barcodeSearch, setBarcodeSearch] = useState("");
   const [newProduct, setNewProduct] = useState({
     name: "",
     description: "",
@@ -86,8 +87,6 @@ const Products = () => {
   const [isEditMode, setIsEditMode] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [productToDelete, setProductToDelete] = useState<Product | null>(null);
-  const [foundProduct, setFoundProduct] = useState<Product | null>(null);
-  const [searchingBarcode, setSearchingBarcode] = useState(false);
   const { toast } = useToast();
   const { isAuthenticated } = useAuth();
 
@@ -100,16 +99,15 @@ const Products = () => {
       .padStart(3, "0");
     const barcode = (timestamp.slice(-10) + random).padStart(13, "0");
     setNewProduct({ ...newProduct, barcode });
-    setFoundProduct(null); // Clear any found product
     toast({
       title: "Barcode Generated",
       description: `Generated barcode: ${barcode}`,
     });
   };
 
-  // Search product by barcode
-  const searchProductByBarcode = async () => {
-    if (!newProduct.barcode.trim()) {
+  // Barcode search for main search area
+  const handleBarcodeSearch = () => {
+    if (!barcodeSearch.trim()) {
       toast({
         title: "Enter Barcode",
         description: "Please enter a barcode to search",
@@ -118,64 +116,23 @@ const Products = () => {
       return;
     }
 
-    setSearchingBarcode(true);
-    try {
-      // Simulate API call delay
-      await new Promise((resolve) => setTimeout(resolve, 500));
+    const found = products.find(product => 
+      product.barcode === barcodeSearch.trim()
+    );
 
-      // Search in existing products
-      const found = products.find(
-        (product) => product.barcode === newProduct.barcode.trim()
-      );
-
-      if (found) {
-        setFoundProduct(found);
-        toast({
-          title: "Product Found",
-          description: `Found existing product: ${found.name}`,
-        });
-      } else {
-        setFoundProduct(null);
-        toast({
-          title: "No Product Found",
-          description: "This barcode doesn't exist. You can add a new product.",
-        });
-      }
-    } catch (error) {
+    if (found) {
       toast({
-        title: "Search Error",
-        description: "Failed to search for product",
+        title: "Product Found",
+        description: `Found: ${found.name} - EGP ${found.price}`,
+      });
+      // You could also highlight the product in the table or scroll to it
+    } else {
+      toast({
+        title: "Product Not Found",
+        description: `No product found with barcode: ${barcodeSearch}`,
         variant: "destructive",
       });
-    } finally {
-      setSearchingBarcode(false);
     }
-  };
-
-  // Use found product data
-  const useFoundProduct = () => {
-    if (foundProduct) {
-      setNewProduct({
-        name: foundProduct.name,
-        description: foundProduct.description || "",
-        price: foundProduct.price.toString(),
-        stock: foundProduct.stock.toString(),
-        alert_level: foundProduct.alert_level?.toString() || "10",
-        cost_price: foundProduct.cost_price?.toString() || "",
-        images: foundProduct.images || [],
-        barcode: foundProduct.barcode,
-      });
-      toast({
-        title: "Product Data Loaded",
-        description: "Product information has been loaded into the form",
-      });
-    }
-  };
-
-  // Clear found product
-  const clearFoundProduct = () => {
-    setFoundProduct(null);
-    setNewProduct({ ...newProduct, barcode: "" });
   };
 
   // Fetch products and categories on component mount
@@ -429,7 +386,6 @@ const Products = () => {
     setIsEditMode(false);
     setIsDialogOpen(false);
     setSelectedImages([]);
-    setFoundProduct(null);
   };
 
   const getStockStatus = (stock: number, lowStockAlert: number) => {
@@ -646,38 +602,15 @@ const Products = () => {
                 <Label>Barcode</Label>
                 <div className="flex gap-2">
                   <Input
-                    placeholder="Enter barcode to search or generate one"
+                    placeholder="Enter barcode or generate one"
                     value={newProduct.barcode}
-                    onChange={(e) => {
+                    onChange={(e) =>
                       setNewProduct({
                         ...newProduct,
                         barcode: e.target.value,
-                      });
-                      // Clear found product when typing
-                      if (foundProduct) {
-                        setFoundProduct(null);
-                      }
-                    }}
-                    onKeyPress={(e) => {
-                      if (e.key === "Enter") {
-                        searchProductByBarcode();
-                      }
-                    }}
+                      })
+                    }
                   />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={searchProductByBarcode}
-                    disabled={searchingBarcode || !newProduct.barcode.trim()}
-                    className="flex items-center gap-2"
-                  >
-                    {searchingBarcode ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <Search className="h-4 w-4" />
-                    )}
-                    Search
-                  </Button>
                   <Button
                     type="button"
                     variant="outline"
@@ -688,62 +621,7 @@ const Products = () => {
                     Generate
                   </Button>
                 </div>
-
-                {/* Search Results */}
-                {foundProduct && (
-                  <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <Package className="h-4 w-4 text-green-600" />
-                        <div>
-                          <p className="font-medium text-green-800">
-                            Product Found!
-                          </p>
-                          <p className="text-sm text-green-700">
-                            {foundProduct.name} - EGP {foundProduct.price}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex gap-2">
-                        <Button
-                          size="sm"
-                          onClick={useFoundProduct}
-                          className="bg-green-600 hover:bg-green-700"
-                        >
-                          Use This Product
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={clearFoundProduct}
-                        >
-                          <X className="h-3 w-3" />
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* No Product Found */}
-                {newProduct.barcode && !foundProduct && !searchingBarcode && (
-                  <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                    <div className="flex items-center gap-2">
-                      <AlertTriangle className="h-4 w-4 text-blue-600" />
-                      <div>
-                        <p className="font-medium text-blue-800">
-                          No Product Found
-                        </p>
-                        <p className="text-sm text-blue-700">
-                          This barcode doesn't exist. You can add it as a new
-                          product.
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Generated Barcode Display */}
-                {newProduct.barcode && !foundProduct && (
+                {newProduct.barcode && (
                   <div className="flex items-center gap-2 text-sm text-gray-600">
                     <QrCode className="h-4 w-4" />
                     <span>Barcode: {newProduct.barcode}</span>
@@ -900,14 +778,39 @@ const Products = () => {
                 Manage your product catalog and stock levels
               </CardDescription>
             </div>
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search products..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-9 w-64"
-              />
+            <div className="flex gap-2">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search products..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-9 w-64"
+                />
+              </div>
+              <div className="relative">
+                <Barcode className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search by barcode..."
+                  value={barcodeSearch}
+                  onChange={(e) => setBarcodeSearch(e.target.value)}
+                  onKeyPress={(e) => {
+                    if (e.key === "Enter") {
+                      handleBarcodeSearch();
+                    }
+                  }}
+                  className="pl-9 w-64"
+                />
+              </div>
+              <Button
+                variant="outline"
+                onClick={handleBarcodeSearch}
+                disabled={!barcodeSearch.trim()}
+                className="flex items-center gap-2"
+              >
+                <Search className="h-4 w-4" />
+                Search
+              </Button>
             </div>
           </div>
         </CardHeader>
