@@ -62,6 +62,7 @@ import { useToast } from "@/hooks/use-toast";
 import { productService, Product, Category } from "@/services/products";
 import { apiService } from "@/services/api";
 import { useAuth } from "@/contexts/AuthContext";
+import InventoryScanner from "@/components/InventoryScanner";
 
 const Products = () => {
   const [products, setProducts] = useState<Product[]>([]);
@@ -120,11 +121,11 @@ const Products = () => {
     setSearchingBarcode(true);
     try {
       // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
       // Search in existing products
-      const found = products.find(product => 
-        product.barcode === newProduct.barcode.trim()
+      const found = products.find(
+        (product) => product.barcode === newProduct.barcode.trim()
       );
 
       if (found) {
@@ -538,18 +539,20 @@ const Products = () => {
             Manage your product catalog and stock levels
           </p>
         </div>
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button
-              onClick={() => {
-                resetForm();
-                setIsDialogOpen(true);
-              }}
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Add Product
-            </Button>
-          </DialogTrigger>
+        <div className="flex gap-2">
+          <InventoryScanner />
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogTrigger asChild>
+              <Button
+                onClick={() => {
+                  resetForm();
+                  setIsDialogOpen(true);
+                }}
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Add Product
+              </Button>
+            </DialogTrigger>
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
               <DialogTitle>
@@ -685,7 +688,7 @@ const Products = () => {
                     Generate
                   </Button>
                 </div>
-                
+
                 {/* Search Results */}
                 {foundProduct && (
                   <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
@@ -693,7 +696,9 @@ const Products = () => {
                       <div className="flex items-center gap-2">
                         <Package className="h-4 w-4 text-green-600" />
                         <div>
-                          <p className="font-medium text-green-800">Product Found!</p>
+                          <p className="font-medium text-green-800">
+                            Product Found!
+                          </p>
                           <p className="text-sm text-green-700">
                             {foundProduct.name} - EGP {foundProduct.price}
                           </p>
@@ -718,22 +723,25 @@ const Products = () => {
                     </div>
                   </div>
                 )}
-                
+
                 {/* No Product Found */}
                 {newProduct.barcode && !foundProduct && !searchingBarcode && (
                   <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
                     <div className="flex items-center gap-2">
                       <AlertTriangle className="h-4 w-4 text-blue-600" />
                       <div>
-                        <p className="font-medium text-blue-800">No Product Found</p>
+                        <p className="font-medium text-blue-800">
+                          No Product Found
+                        </p>
                         <p className="text-sm text-blue-700">
-                          This barcode doesn't exist. You can add it as a new product.
+                          This barcode doesn't exist. You can add it as a new
+                          product.
                         </p>
                       </div>
                     </div>
                   </div>
                 )}
-                
+
                 {/* Generated Barcode Display */}
                 {newProduct.barcode && !foundProduct && (
                   <div className="flex items-center gap-2 text-sm text-gray-600">
@@ -824,6 +832,7 @@ const Products = () => {
             </div>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
 
       {/* Stats Cards */}
